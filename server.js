@@ -34,7 +34,6 @@ app.get('/stream', async (req, res) => {
         const hlsFormat = info.formats.find(f => f.isHLS || (f.url && f.url.includes('manifest/hls_playlist')));
 
         if (hlsFormat && hlsFormat.url) {
-            // Redirect directly to the manifest file
             return res.redirect(302, hlsFormat.url);
         } else {
             return res.status(404).json({ error: 'Live stream manifest not found' });
