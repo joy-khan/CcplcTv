@@ -4,8 +4,12 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// M3U Playlist Source
-const M3U_URL = 'https://raw.githubusercontent.com/cctvccplc/Tv-Test/refs/heads/main/Orochi%20Tv';
+// M3U Playlist Sources
+const M3U_URLS = [
+    'https://raw.githubusercontent.com/cctvccplc/Tv-Test/refs/heads/main/Orochi%20Tv',
+    'https://raw.githubusercontent.com/cctvccplc/Tv-Test/refs/heads/main/All%20alive',
+    'https://raw.githubusercontent.com/cctvccplc/Tv-Test/refs/heads/main/my%20new%20combine%20m3u'
+];
 
 // CORS Middleware
 app.use((req, res, next) => {
@@ -79,7 +83,6 @@ app.get('/', (req, res) => {
 
         ::selection { background: transparent; color: inherit; }
 
-        /* Focus visibility for keyboard / TV remote / D-pad navigation */
         a:focus-visible, button:focus-visible, .item:focus-visible,
         .tab:focus-visible, input:focus-visible, .fs-btn:focus-visible {
             outline: 3px solid var(--live);
@@ -195,6 +198,36 @@ app.get('/', (req, res) => {
             font-size: 16px;
         }
 
+        /* Multi Source Bar Design */
+        .source-bar {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .source-btn {
+            background: var(--surface);
+            border: 1px solid var(--border-strong);
+            color: var(--text-dim);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .source-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: bold;
+        }
+
         .info-slider {
             background: #0c0d0f;
             color: var(--live);
@@ -247,7 +280,7 @@ app.get('/', (req, res) => {
             border-radius: 6px;
             color: var(--text);
             font-family: var(--sans);
-            font-size: 16px; /* prevents iOS zoom-on-focus */
+            font-size: 16px;
             outline: none;
             box-sizing: border-box;
             transition: border-color 0.2s;
@@ -337,9 +370,6 @@ app.get('/', (req, res) => {
             line-height: 1.3;
         }
 
-        /* ===================== RESPONSIVE BREAKPOINTS ===================== */
-
-        /* Small phones */
         @media (max-width: 380px) {
             .logo { font-size: 13px; }
             .logo span.tag { display: none; }
@@ -349,69 +379,11 @@ app.get('/', (req, res) => {
             .ch-name { font-size: 10px; }
         }
 
-        /* Phones (portrait) */
         @media (max-width: 600px) {
             header { padding: 8px 12px; }
             .video-box { max-height: 32vh; border-radius: 0; margin-top: 0; }
             .container { padding: 0 10px; }
             .tab { padding: 8px 12px; font-size: 10.5px; }
-        }
-
-        /* Phones in landscape: prioritize video, shrink chrome */
-        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
-            header { padding: 4px 10px; }
-            .video-box { max-height: 92vh; max-width: 100%; }
-            .info-slider, .search-box-container, .tabs, .grid { display: none; }
-        }
-
-        /* Tablets */
-        @media (min-width: 601px) and (max-width: 1024px) {
-            .video-box { max-height: 46vh; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-            .item { min-height: 120px; }
-            .ch-logo, .ch-logo-fallback { width: 44px; height: 44px; }
-            .ch-name { font-size: 12px; }
-        }
-
-        /* Small laptops / desktop */
-        @media (min-width: 1025px) and (max-width: 1600px) {
-            .video-box { max-width: 950px; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-        }
-
-        /* Large desktop monitors */
-        @media (min-width: 1601px) {
-            .video-box { max-width: 1100px; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
-            .container { padding: 0 24px; }
-        }
-
-        /* TV / very large screens (Smart TV browsers, Android TV, webOS, Tizen) */
-        @media (min-width: 1900px), (min-height: 1080px) and (min-width: 1600px) {
-            body { font-size: 20px; }
-            .logo { font-size: 20px; }
-            .video-box { max-width: 1300px; max-height: 70vh; }
-            .container { padding: 0 40px; max-width: 1700px; }
-            .tab { font-size: 15px; padding: 14px 22px; }
-            #ch-search { font-size: 20px; padding: 18px 20px 18px 44px; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-            .item { min-height: 150px; padding: 18px 10px; }
-            .ch-logo, .ch-logo-fallback { width: 58px; height: 58px; font-size: 22px; }
-            .ch-name { font-size: 15px; }
-            a:focus-visible, button:focus-visible, .item:focus-visible, .tab:focus-visible {
-                outline-width: 4px;
-            }
-        }
-
-        /* Fine pointer (mouse) vs coarse pointer (touch) tap sizing */
-        @media (pointer: coarse) {
-            .item, .tab, .fs-btn { min-height: var(--tap-min); }
-        }
-
-        /* Respect users who prefer reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-            .info-content { animation: none; }
-            .item, .item::before { transition: none; }
         }
     </style>
 </head>
@@ -434,6 +406,9 @@ app.get('/', (req, res) => {
         <iframe id="iframe-player" style="display:none; width:100%; height:100%; border:none;" allowfullscreen></iframe>
         <button class="fs-btn" id="fs-toggle" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">⛶</button>
     </div>
+
+    <!-- Dynamic Source Selector -->
+    <div class="source-bar" id="source-container"></div>
 
     <div class="info-slider">
         <div class="info-content" id="sliding-info">তথ্য লোড হচ্ছে...</div>
@@ -471,7 +446,6 @@ app.get('/', (req, res) => {
         }
     }, 1000);
 
-    // Toggle focus outlines off for mouse users, on for keyboard/remote users
     document.addEventListener('mousedown', () => document.body.classList.add('using-mouse'));
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Tab' || e.key.startsWith('Arrow') || e.key === 'Enter') {
@@ -483,6 +457,7 @@ app.get('/', (req, res) => {
     let masterData = {};
     let currentRandomQuote = "";
     let lastActiveCategory = "";
+    let currentSelectedChannel = null;
 
     const M3U_URL = '/proxy-m3u';
 
@@ -525,28 +500,48 @@ app.get('/', (req, res) => {
         }
     }
 
+    // M3U Parsing Logic with Smart Deduplication & Multi Source Support
     function parseM3U(data) {
         const lines = data.split('\\n');
         let temp = null;
         lines.forEach(l => {
             if (l.includes('#EXTINF:')) {
-                temp = {
-                    name: l.split(',')[1]?.trim() || "অজানা চ্যানেল",
-                    logo: l.match(/tvg-logo="([^"]+)"/)?.[1] || "",
-                    category: l.match(/group-title="([^"]+)"/)?.[1]?.toUpperCase() || "OTHERS"
-                };
+                const name = l.split(',')[1]?.trim() || "অজানা চ্যানেল";
+                const logo = l.match(/tvg-logo="([^"]+)"/)?.[1] || "";
+                const category = l.match(/group-title="([^"]+)"/)?.[1]?.toUpperCase() || "OTHERS";
+                temp = { name, logo, category };
             } else if (l.startsWith('http') && temp) {
                 temp.url = l.trim();
                 temp.isIframe = temp.url.includes('bongoflix');
-                addChannel(temp.category, temp);
+                addChannelSmart(temp);
                 temp = null;
             }
         });
     }
 
-    function addChannel(cat, ch) {
+    // চ্যানেল একই নামের হলে নতুন source হিসেবে যোগ করা
+    function addChannelSmart(ch) {
+        const cat = ch.category;
         if (!masterData[cat]) masterData[cat] = [];
-        masterData[cat].push(ch);
+
+        // নাম দিয়ে প্রসেস করা (Case insensitive)
+        const existingCh = masterData[cat].find(item => item.name.toLowerCase() === ch.name.toLowerCase());
+
+        if (existingCh) {
+            // লিঙ্ক বা URL ডুপ্লিকেট না হলে নতুন সোর্স হিসেবে যোগ করবে
+            const existsUrl = existingCh.sources.some(s => s.url === ch.url);
+            if (!existsUrl) {
+                existingCh.sources.push({ url: ch.url, isIframe: ch.isIframe });
+            }
+            if (!existingCh.logo && ch.logo) existingCh.logo = ch.logo;
+        } else {
+            masterData[cat].push({
+                name: ch.name,
+                logo: ch.logo,
+                category: ch.category,
+                sources: [{ url: ch.url, isIframe: ch.isIframe }]
+            });
+        }
     }
 
     function renderTabs() {
@@ -598,33 +593,58 @@ app.get('/', (req, res) => {
         }
     }
 
+    // চ্যানেল ও সোর্স প্লে করার ফাংশন
     function playChannel(ch, el) {
+        currentSelectedChannel = ch;
         document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
         if(el) el.classList.add('active');
 
+        // Source Bar UI Generation
+        const srcContainer = document.getElementById('source-container');
+        if (ch.sources && ch.sources.length > 1) {
+            srcContainer.style.display = 'flex';
+            srcContainer.innerHTML = ch.sources.map((s, idx) => 
+                \`<button class="source-btn \${idx === 0 ? 'active' : ''}" onclick="switchSource(\${idx}, this)">Source \${idx + 1}</button>\`
+            ).join('');
+        } else {
+            srcContainer.style.display = 'none';
+        }
+
+        // Play First Source By Default
+        loadSourceStream(ch.sources[0]);
+    }
+
+    function switchSource(idx, btn) {
+        document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        if (currentSelectedChannel && currentSelectedChannel.sources[idx]) {
+            loadSourceStream(currentSelectedChannel.sources[idx]);
+        }
+    }
+
+    function loadSourceStream(source) {
         const v = document.getElementById('vjs-player');
         const f = document.getElementById('iframe-player');
 
-        if (ch.isIframe) {
+        if (source.isIframe) {
             if(tvPlayer && tvPlayer.pause) tvPlayer.pause();
             v.parentElement.style.display = 'none';
             f.style.display = 'block';
-            f.src = ch.url;
+            f.src = source.url;
         } else {
             f.style.display = 'none';
             v.parentElement.style.display = 'block';
 
             let videoType = 'application/x-mpegURL';
-            if (ch.url.includes('.mp4') || ch.url.includes('videoplayback')) {
+            if (source.url.includes('.mp4') || source.url.includes('videoplayback')) {
                 videoType = 'video/mp4';
             }
 
-            tvPlayer.src({ src: ch.url, type: videoType });
+            tvPlayer.src({ src: source.url, type: videoType });
             tvPlayer.play();
         }
     }
 
-    // Fullscreen toggle - works across desktop, mobile, tablet, TV browsers
     function toggleFullscreen() {
         const box = document.getElementById('player-container');
         if (!document.fullscreenElement) {
@@ -634,8 +654,6 @@ app.get('/', (req, res) => {
         }
     }
 
-    // Basic arrow-key / D-pad navigation across the channel grid and tabs,
-    // useful for Smart TV remotes (Android TV, webOS, Tizen) and keyboard users.
     function setupGridKeyboardNav() {
         document.addEventListener('keydown', (e) => {
             const active = document.activeElement;
@@ -672,14 +690,24 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Proxy M3U Route (CORS Issue Avoid করার জন্য)
+// Proxy M3U Route
 app.get('/proxy-m3u', async (req, res) => {
     try {
-        const response = await axios.get(M3U_URL);
+        const requests = M3U_URLS.map(url => axios.get(url, { timeout: 10000 }));
+        const responses = await Promise.allSettled(requests);
+
+        let combinedM3U = "#EXTM3U\n";
+
+        responses.forEach(result => {
+            if (result.status === 'fulfilled' && result.value.data) {
+                combinedM3U += result.value.data + "\n";
+            }
+        });
+
         res.setHeader('Content-Type', 'text/plain');
-        res.send(response.data);
+        res.send(combinedM3U);
     } catch (error) {
-        res.status(500).send('Error fetching M3U file');
+        res.status(500).send('Error fetching M3U files');
     }
 });
 
