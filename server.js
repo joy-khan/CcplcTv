@@ -1,5 +1,5 @@
 const express = require('express');
-const ytdl = require('@distube/ytdl-core');
+const axios = require('axios');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>YouTube Live TV Player</title>
+            <title>YouTube Live Player</title>
             <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,14 +45,14 @@ app.get('/', (req, res) => {
                     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
                 }
                 video { width: 100%; height: 100%; }
-                .status { margin-top: 15px; font-size: 14px; color: #888; }
+                .status { margin-top: 15px; font-size: 14px; color: #00ffcc; }
             </style>
         </head>
         <body>
             <div class="player-box">
                 <video id="video" controls autoplay muted playsinline></video>
             </div>
-            <div class="status" id="status">Stream loading, please wait...</div>
+            <div class="status" id="status">Connecting to stream...</div>
 
             <script>
                 const video = document.getElementById('video');
@@ -60,23 +60,23 @@ app.get('/', (req, res) => {
                 const streamUrl = '/stream?id=${videoId}';
 
                 if (Hls.isSupported()) {
-                    const hls = new Hls();
+                    const hls = new Hls({ enableWorker: true });
                     hls.loadSource(streamUrl);
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                        status.innerText = "Playing Live Stream";
+                        status.innerText = "Playing Live Stream 🔴";
                         video.play();
                     });
                     hls.on(Hls.Events.ERROR, function(event, data) {
                         if(data.fatal) {
-                            status.innerText = "Error loading stream. Retrying...";
-                            hls.startLoad();
+                            status.innerText = "Reconnecting stream...";
+                            setTimeout(() => { hls.loadSource(streamUrl); }, 3000);
                         }
                     });
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = streamUrl;
                     video.addEventListener('loadedmetadata', function () {
-                        status.innerText = "Playing Live Stream";
+                        status.innerText = "Playing Live Stream 🔴";
                         video.play();
                     });
                 }
@@ -86,35 +86,35 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Stream URL Exporter
+// Stream Manifest Extraction (No ytdl dependency required)
 app.get('/stream', async (req, res) => {
     const videoId = req.query.id || 'M3HKLzjvKPc';
 
     try {
-        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        
-        const info = await ytdl.getInfo(videoUrl, {
-            requestOptions: {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-                }
+        const response = await axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9'
             }
         });
 
-        const hlsFormat = info.formats.find(f => f.isHLS || (f.url && f.url.includes('manifest/hls_playlist')));
+        const html = response.data;
+        // Regex search for hlsManifestUrl
+        const match = html.match(/"hlsManifestUrl":"([^"]+)"/);
 
-        if (hlsFormat && hlsFormat.url) {
-            return res.redirect(302, hlsFormat.url);
+        if (match && match[1]) {
+            const hlsUrl = match[1].replace(/\\u0026/g, '&');
+            return res.redirect(302, hlsUrl);
         } else {
-            return res.status(404).json({ error: 'Live stream manifest not found' });
+            return res.status(404).json({ error: 'HLS stream not found or channel is not live' });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'YouTube blocked or video unavailable', details: error.message });
+        console.error("Stream Fetch Error:", error.message);
+        res.status(500).json({ error: 'Failed to fetch YouTube manifest', details: error.message });
     }
 });
 
-// Playlist Export for IPTV
+// Playlist for IPTV
 app.get('/playlist.m3u', (req, res) => {
     const videoId = req.query.id || 'M3HKLzjvKPc';
     const host = req.get('host');
