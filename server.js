@@ -21,7 +21,11 @@ app.get('/', (req, res) => {
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+    <meta name="theme-color" content="#08090b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>CCPLC CCTV | Hybrid TV</title>
     <link href="https://vjs.zencdn.net/7.20.3/video-js.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -41,15 +45,23 @@ app.get('/', (req, res) => {
             --amber: #e8a13b;
             --mono: 'JetBrains Mono', monospace;
             --sans: 'Hind Siliguri', sans-serif;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --tap-min: 44px;
         }
 
-        * { 
-            box-sizing: border-box; 
+        * {
+            box-sizing: border-box;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
         body {
             background-color: var(--bg);
@@ -60,15 +72,31 @@ app.get('/', (req, res) => {
             font-family: var(--sans);
             margin: 0; padding: 0;
             overflow-x: hidden;
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
+            font-size: clamp(14px, 1.4vw, 17px);
         }
 
         ::selection { background: transparent; color: inherit; }
+
+        /* Focus visibility for keyboard / TV remote / D-pad navigation */
+        a:focus-visible, button:focus-visible, .item:focus-visible,
+        .tab:focus-visible, input:focus-visible, .fs-btn:focus-visible {
+            outline: 3px solid var(--live);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+        body.using-mouse a:focus, body.using-mouse button:focus,
+        body.using-mouse .item:focus, body.using-mouse .tab:focus {
+            outline: none;
+        }
 
         .sticky-top-area {
             position: sticky;
             top: 0;
             z-index: 1000;
             background: var(--bg);
+            padding-top: var(--safe-top);
         }
 
         header {
@@ -77,6 +105,8 @@ app.get('/', (req, res) => {
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .logo-block { display: flex; align-items: center; gap: 10px; }
@@ -150,6 +180,21 @@ app.get('/', (req, res) => {
             object-fit: contain;
         }
 
+        .fs-btn {
+            position: absolute;
+            bottom: 10px; right: 10px;
+            z-index: 6;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid var(--border-strong);
+            color: var(--text);
+            width: var(--tap-min);
+            height: var(--tap-min);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
         .info-slider {
             background: #0c0d0f;
             color: var(--live);
@@ -175,16 +220,18 @@ app.get('/', (req, res) => {
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 12px;
+            padding-bottom: var(--safe-bottom);
         }
 
         .search-box-container { padding: 14px 0 8px 0; position: relative; }
 
         .search-icon {
             position: absolute;
-            left: 14px; top: 24px;
+            left: 14px; top: 50%;
+            transform: translateY(-6px);
             color: var(--text-faint);
             font-family: var(--mono);
             font-size: 13px;
@@ -193,16 +240,19 @@ app.get('/', (req, res) => {
 
         #ch-search {
             width: 100%;
-            padding: 11px 15px 11px 34px;
+            padding: 13px 15px 13px 34px;
+            min-height: var(--tap-min);
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--text);
             font-family: var(--sans);
-            font-size: 14px;
+            font-size: 16px; /* prevents iOS zoom-on-focus */
             outline: none;
             box-sizing: border-box;
             transition: border-color 0.2s;
+            -webkit-user-select: text;
+            user-select: text;
         }
         #ch-search::placeholder { color: var(--text-faint); }
         #ch-search:focus { border-color: var(--accent-dim); }
@@ -211,6 +261,7 @@ app.get('/', (req, res) => {
             display: flex; overflow-x: auto; gap: 4px; padding: 12px 0 10px 0;
             scrollbar-width: thin;
             border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab {
@@ -218,7 +269,8 @@ app.get('/', (req, res) => {
             border: none;
             border-bottom: 2px solid transparent;
             color: var(--text-dim);
-            padding: 6px 14px 10px 14px;
+            padding: 10px 14px;
+            min-height: var(--tap-min);
             font-family: var(--mono);
             font-size: 11px;
             font-weight: 600;
@@ -285,13 +337,81 @@ app.get('/', (req, res) => {
             line-height: 1.3;
         }
 
-        @media (max-height: 800px) {
-            .video-box { max-width: 700px; }
-            header { padding: 6px 12px; }
+        /* ===================== RESPONSIVE BREAKPOINTS ===================== */
+
+        /* Small phones */
+        @media (max-width: 380px) {
+            .logo { font-size: 13px; }
+            .logo span.tag { display: none; }
+            .powered-by { display: none; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+            .ch-logo, .ch-logo-fallback { width: 32px; height: 32px; }
+            .ch-name { font-size: 10px; }
         }
 
-        @media (max-width: 420px) {
-            .logo span.tag { display: none; }
+        /* Phones (portrait) */
+        @media (max-width: 600px) {
+            header { padding: 8px 12px; }
+            .video-box { max-height: 32vh; border-radius: 0; margin-top: 0; }
+            .container { padding: 0 10px; }
+            .tab { padding: 8px 12px; font-size: 10.5px; }
+        }
+
+        /* Phones in landscape: prioritize video, shrink chrome */
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+            header { padding: 4px 10px; }
+            .video-box { max-height: 92vh; max-width: 100%; }
+            .info-slider, .search-box-container, .tabs, .grid { display: none; }
+        }
+
+        /* Tablets */
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .video-box { max-height: 46vh; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+            .item { min-height: 120px; }
+            .ch-logo, .ch-logo-fallback { width: 44px; height: 44px; }
+            .ch-name { font-size: 12px; }
+        }
+
+        /* Small laptops / desktop */
+        @media (min-width: 1025px) and (max-width: 1600px) {
+            .video-box { max-width: 950px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        }
+
+        /* Large desktop monitors */
+        @media (min-width: 1601px) {
+            .video-box { max-width: 1100px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+            .container { padding: 0 24px; }
+        }
+
+        /* TV / very large screens (Smart TV browsers, Android TV, webOS, Tizen) */
+        @media (min-width: 1900px), (min-height: 1080px) and (min-width: 1600px) {
+            body { font-size: 20px; }
+            .logo { font-size: 20px; }
+            .video-box { max-width: 1300px; max-height: 70vh; }
+            .container { padding: 0 40px; max-width: 1700px; }
+            .tab { font-size: 15px; padding: 14px 22px; }
+            #ch-search { font-size: 20px; padding: 18px 20px 18px 44px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+            .item { min-height: 150px; padding: 18px 10px; }
+            .ch-logo, .ch-logo-fallback { width: 58px; height: 58px; font-size: 22px; }
+            .ch-name { font-size: 15px; }
+            a:focus-visible, button:focus-visible, .item:focus-visible, .tab:focus-visible {
+                outline-width: 4px;
+            }
+        }
+
+        /* Fine pointer (mouse) vs coarse pointer (touch) tap sizing */
+        @media (pointer: coarse) {
+            .item, .tab, .fs-btn { min-height: var(--tap-min); }
+        }
+
+        /* Respect users who prefer reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .info-content { animation: none; }
+            .item, .item::before { transition: none; }
         }
     </style>
 </head>
@@ -310,8 +430,9 @@ app.get('/', (req, res) => {
         <div class="frame-corner fc-tr"></div>
         <div class="frame-corner fc-bl"></div>
         <div class="frame-corner fc-br"></div>
-        <video id="vjs-player" class="video-js vjs-big-play-centered" controls preload="auto"></video>
+        <video id="vjs-player" class="video-js vjs-big-play-centered" controls playsinline preload="auto"></video>
         <iframe id="iframe-player" style="display:none; width:100%; height:100%; border:none;" allowfullscreen></iframe>
+        <button class="fs-btn" id="fs-toggle" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Fullscreen">⛶</button>
     </div>
 
     <div class="info-slider">
@@ -322,18 +443,18 @@ app.get('/', (req, res) => {
 <div class="container">
     <div class="search-box-container">
         <span class="search-icon">⌕</span>
-        <input type="text" id="ch-search" placeholder="চ্যানেল সার্চ করুন..." onkeyup="filterChannels()">
+        <input type="text" id="ch-search" placeholder="চ্যানেল সার্চ করুন..." onkeyup="filterChannels()" inputmode="search">
     </div>
     <div class="tabs" id="tabs-list"></div>
-    <div class="grid" id="grid-list">অপেক্ষা করুন...</div>
+    <div class="grid" id="grid-list" tabindex="-1">অপেক্ষা করুন...</div>
 </div>
 
 <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
 <script>
     document.addEventListener('keydown', function(e) {
         if (
-            e.keyCode === 123 || 
-            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+            e.keyCode === 123 ||
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
             (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))
         ) {
             e.preventDefault();
@@ -349,6 +470,14 @@ app.get('/', (req, res) => {
             document.body.innerHTML = "<h2 style='color:#e8384f; text-align:center; margin-top:20%; font-family: sans-serif;'>Access Restricted! Inspect Element Disabled.</h2>";
         }
     }, 1000);
+
+    // Toggle focus outlines off for mouse users, on for keyboard/remote users
+    document.addEventListener('mousedown', () => document.body.classList.add('using-mouse'));
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' || e.key.startsWith('Arrow') || e.key === 'Enter') {
+            document.body.classList.remove('using-mouse');
+        }
+    });
 
     let tvPlayer = null;
     let masterData = {};
@@ -380,8 +509,9 @@ app.get('/', (req, res) => {
 
     window.onload = async () => {
         pickRandomQuote();
-        tvPlayer = videojs('vjs-player', { responsive: true, fluid: true });
+        tvPlayer = videojs('vjs-player', { responsive: true, fluid: true, playsinline: true });
         await loadPlaylist();
+        setupGridKeyboardNav();
     };
 
     async function loadPlaylist() {
@@ -400,10 +530,10 @@ app.get('/', (req, res) => {
         let temp = null;
         lines.forEach(l => {
             if (l.includes('#EXTINF:')) {
-                temp = { 
-                    name: l.split(',')[1]?.trim() || "অজানা চ্যানেল", 
-                    logo: l.match(/tvg-logo="([^"]+)"/)?.[1] || "", 
-                    category: l.match(/group-title="([^"]+)"/)?.[1]?.toUpperCase() || "OTHERS" 
+                temp = {
+                    name: l.split(',')[1]?.trim() || "অজানা চ্যানেল",
+                    logo: l.match(/tvg-logo="([^"]+)"/)?.[1] || "",
+                    category: l.match(/group-title="([^"]+)"/)?.[1]?.toUpperCase() || "OTHERS"
                 };
             } else if (l.startsWith('http') && temp) {
                 temp.url = l.trim();
@@ -421,7 +551,9 @@ app.get('/', (req, res) => {
 
     function renderTabs() {
         const cats = Object.keys(masterData).sort();
-        document.getElementById('tabs-list').innerHTML = cats.map(c => \`<button class="tab" onclick="loadCategory('\${c}')" id="tab-\${c}">\${c}</button>\`).join('');
+        document.getElementById('tabs-list').innerHTML = cats.map(c =>
+            \`<button class="tab" onclick="loadCategory('\${c}')" id="tab-\${c}" tabindex="0">\${c}</button>\`
+        ).join('');
         if (cats.length > 0) loadCategory(cats.includes('SPORTS') ? 'SPORTS' : cats[0]);
     }
 
@@ -440,9 +572,9 @@ app.get('/', (req, res) => {
             return;
         }
         grid.innerHTML = list.map(ch => {
-            let img = (ch.logo && ch.logo.startsWith('http')) ? \`<img class="ch-logo" src="\${ch.logo}">\` : \`<span class="ch-logo-fallback">📺</span>\`;
+            let img = (ch.logo && ch.logo.startsWith('http')) ? \`<img class="ch-logo" src="\${ch.logo}" loading="lazy" alt="">\` : \`<span class="ch-logo-fallback">📺</span>\`;
             const safeData = btoa(encodeURIComponent(JSON.stringify(ch)));
-            return \`<div class="item" onclick='playChannelFromData("\${safeData}", this)'>\${img}<div class="ch-name">\${ch.name}</div></div>\`;
+            return \`<div class="item" tabindex="0" role="button" aria-label="\${ch.name}" onclick='playChannelFromData("\${safeData}", this)' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();playChannelFromData("\${safeData}", this);}'>\${img}<div class="ch-name">\${ch.name}</div></div>\`;
         }).join('');
     }
 
@@ -469,27 +601,70 @@ app.get('/', (req, res) => {
     function playChannel(ch, el) {
         document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
         if(el) el.classList.add('active');
-        
+
         const v = document.getElementById('vjs-player');
         const f = document.getElementById('iframe-player');
 
-        if (ch.isIframe) { 
-            if(tvPlayer && tvPlayer.pause) tvPlayer.pause(); 
+        if (ch.isIframe) {
+            if(tvPlayer && tvPlayer.pause) tvPlayer.pause();
             v.parentElement.style.display = 'none';
-            f.style.display = 'block'; 
-            f.src = ch.url; 
-        } else { 
-            f.style.display = 'none'; 
-            v.parentElement.style.display = 'block'; 
-            
+            f.style.display = 'block';
+            f.src = ch.url;
+        } else {
+            f.style.display = 'none';
+            v.parentElement.style.display = 'block';
+
             let videoType = 'application/x-mpegURL';
             if (ch.url.includes('.mp4') || ch.url.includes('videoplayback')) {
                 videoType = 'video/mp4';
             }
 
-            tvPlayer.src({ src: ch.url, type: videoType }); 
-            tvPlayer.play(); 
+            tvPlayer.src({ src: ch.url, type: videoType });
+            tvPlayer.play();
         }
+    }
+
+    // Fullscreen toggle - works across desktop, mobile, tablet, TV browsers
+    function toggleFullscreen() {
+        const box = document.getElementById('player-container');
+        if (!document.fullscreenElement) {
+            (box.requestFullscreen || box.webkitRequestFullscreen || box.msRequestFullscreen || function(){}).call(box);
+        } else {
+            (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen || function(){}).call(document);
+        }
+    }
+
+    // Basic arrow-key / D-pad navigation across the channel grid and tabs,
+    // useful for Smart TV remotes (Android TV, webOS, Tizen) and keyboard users.
+    function setupGridKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            const active = document.activeElement;
+            const isItem = active && active.classList && active.classList.contains('item');
+            const isTab = active && active.classList && active.classList.contains('tab');
+            if (!isItem && !isTab) return;
+
+            const container = isItem ? Array.from(document.querySelectorAll('.item')) : Array.from(document.querySelectorAll('.tab'));
+            const idx = container.indexOf(active);
+            let nextIdx = idx;
+
+            if (isItem) {
+                const cols = Math.max(1, Math.floor(document.getElementById('grid-list').clientWidth / (active.offsetWidth + 10)));
+                if (e.key === 'ArrowRight') nextIdx = idx + 1;
+                else if (e.key === 'ArrowLeft') nextIdx = idx - 1;
+                else if (e.key === 'ArrowDown') nextIdx = idx + cols;
+                else if (e.key === 'ArrowUp') nextIdx = idx - cols;
+                else return;
+            } else {
+                if (e.key === 'ArrowRight') nextIdx = idx + 1;
+                else if (e.key === 'ArrowLeft') nextIdx = idx - 1;
+                else return;
+            }
+
+            if (nextIdx >= 0 && nextIdx < container.length) {
+                e.preventDefault();
+                container[nextIdx].focus();
+            }
+        });
     }
 </script>
 </body>
