@@ -4,14 +4,19 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// Allow CORS so your player can access it from anywhere
+// Allow CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', '*');
     next();
 });
 
-// Endpoint to get fresh m3u8 stream
+// 1. Home Route (এটি 'Cannot GET /' সমস্যা সমাধান করবে)
+app.get('/', (req, res) => {
+    res.send('<h2>YouTube Proxy Server is Live!</h2><p>Usage: <code>/stream?id=VIDEO_ID</code></p>');
+});
+
+// 2. Stream Endpoint
 app.get('/stream', async (req, res) => {
     const videoId = req.query.id;
     if (!videoId) {
@@ -23,10 +28,9 @@ app.get('/stream', async (req, res) => {
         const info = await ytdl.getInfo(videoUrl);
         
         // Find HLS / M3U8 Manifest URL
-        const hlsManifest = info.formats.find(f => f.isHLS || f.url.includes('manifest/hls_playlist'));
+        const hlsManifest = info.formats.find(f => f.isHLS || (f.url && f.url.includes('manifest/hls_playlist')));
 
         if (hlsManifest && hlsManifest.url) {
-            // Redirect directly to the live fresh m3u8 url
             return res.redirect(hlsManifest.url);
         } else {
             return res.status(404).json({ error: 'No HLS stream found for this video' });
